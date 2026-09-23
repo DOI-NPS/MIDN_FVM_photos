@@ -15,7 +15,7 @@ shiny_server <- function(session, input, output){
   
     
   output$plot_df <- renderUI({
-    plots2 <- plots |> filter(Unit_Code %in% input$park) =
+    plots2 <- plots |> filter(Unit_Code %in% input$park) |> arrange(Plot_Name)
     selectizeInput(inputId = 'plot', 
                    label = h5("Zoom to a plot"), 
                    choices = c("Choose a plot" = "", unique(plots2$Plot_Name)))
@@ -130,18 +130,18 @@ shiny_server <- function(session, input, output){
     req(input$park)
     
     park_coords <- plots |> filter(Unit_Code %in% input$park) |> summarize(long = mean(Long),
-                                                                             lat = mean(Lat))  
+                                                                           lat = mean(Lat))  
     
-    park_plots <- plots |> filter(Unit_Code %in% input$park) |> select(Plot_Name) |> distinct()
+    park_plots <- plots |> filter(Unit_Code %in% input$park) |> select(Plot_Name) |> distinct() |> 
+      arrange(Plot_Name)
     
-    
-    zoom_level <- case_when(input$park %in% c("ASIS", "RICH") ~ 9.5,
+    zoom_level <- case_when(input$park %in% c("ASIS") ~ 9.5,
+                            input$park %in% c("RICH") ~ 9.25,
                             input$park %in% c("FRSP", "COLO") ~ 11,
                             input$park %in% c("GETT", "PETE") ~ 11.5,
                             input$park %in% c("APCO", "VAFO") ~ 12.5, 
                             input$park %in% c("BOWA", "GEWA", "HOFU", "THST") ~ 13.5,
                             input$park %in% c("SAHI") ~ 15,
-                            input$park %in% c("RICH") ~ 16, 
                             TRUE ~ 12.5)
     
     updateSelectizeInput(session, 'plot',
@@ -200,7 +200,8 @@ shiny_server <- function(session, input, output){
     MarkerClick <- input$forestMap_marker_click
     plot_click <- plots[plots$Plot_Name == MarkerClick$id, ]
     
-    plots_park <- plots |> filter(Unit_Code %in% input$park) |> select(Plot_Name) |>distinct()
+    plots_park <- plots |> filter(Unit_Code %in% input$park) |> select(Plot_Name) |> distinct() |> 
+      arrange(Plot_Name)
     
     tempdata <- plot_click |> select(Plot_Name, Long, Lat, Last_Sampled = SampleYear, Panel, Physio,
                                       Num_Live_Trees, Num_Dead_Trees, Inv_Shrub_Cov, 
@@ -229,7 +230,7 @@ shiny_server <- function(session, input, output){
     )
     
     updateSelectizeInput(session, 'plot',
-                         choices = c("Choose a plot" = "", unique(plots_park$Plot_Name)),
+                         choices = c("Choose a plot" = "", sort(unique(plots_park$Plot_Name))),
                          selected = paste(plot_click$Plot_Name))
     
     photoUR <- as.character(plot_click |> filter(Plot_Name == MarkerClick$id) |> 
