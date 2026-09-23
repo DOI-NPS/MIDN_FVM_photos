@@ -152,6 +152,10 @@ photo_name_wide$Plot_Name <- sub("_", "-", photo_name_wide$plot_name)
 plots <- left_join(comb, photo_name_wide[,-1], by = "Plot_Name")
 plots$plot_number <- substr(plots$Plot_Name, 6, 9)
 
+missing_plots <- plots |> filter(is.na(BL) | is.na(BR) | is.na(UL) | is.na(UR))
+if(nrow(missing_plots) > 0){warning("Some photos did not link properly to the dataset. Check that they 
+                                      are found on the MIDN server and are formatted correctly.")}
+
 write.csv(plots, "./data/Plots.csv", row.names = FALSE)
 
 table(plots$Unit_Code)
