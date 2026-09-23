@@ -38,7 +38,7 @@ plots1 <- rbind(joinLocEvent(park = MIDN1, from = years_MIDN1[1], to = years_MID
   select(Plot_Name, Unit_Code = ParkUnit, Panel = PanelCode, Physio,
          Directions, Location_Notes = PlotNotes, SampleYear, Lat, Long)
 
-trees <- rbind(joinTreeData(park = MIDN1, from = years_MIDN1[1], to = years_MIDN1[2], status = 'active'),
+trees <- rbind(joinTreeData(park = MIDN1, from = years_MIDN1[1], to = years_MIDN1[2], status = 'active', locType = 'all'),
                joinTreeData(park = MIDN2, from = years_MIDN2[1], to = years_MIDN2[2], status = 'active'),
                joinTreeData(park = NCBN, from = years_NCBN[1], to = years_NCBN[2], status = 'active'),
                joinTreeData(park = "COLO", from = years_COLO[1], to = years_COLO[2], status = 'active'),
@@ -60,7 +60,7 @@ trees_sum <- trees |>
   select(Plot_Name, Num_Live_Trees = live, Num_Dead_Trees = dead)
 
 
-inv_shrubs <- rbind(joinMicroShrubData(park = MIDN1, from = years_MIDN1[1], to = years_MIDN1[2], speciesType = 'invasive'),
+inv_shrubs <- rbind(joinMicroShrubData(park = MIDN1, from = years_MIDN1[1], to = years_MIDN1[2], speciesType = 'invasive', locType = 'all'),
                     joinMicroShrubData(park = MIDN2, from = years_MIDN2[1], to = years_MIDN2[2], speciesType = 'invasive'),
                     joinMicroShrubData(park = NCBN, from = years_NCBN[1], to = years_NCBN[2], speciesType = 'invasive'),
                     joinMicroShrubData(park = "COLO", from = years_COLO[1], to = years_COLO[2], speciesType = 'invasive'),
@@ -68,7 +68,7 @@ inv_shrubs <- rbind(joinMicroShrubData(park = MIDN1, from = years_MIDN1[1], to =
                     joinMicroShrubData(park = "SAHI", from = years_SAHI, to = years_SAHI, speciesType = 'invasive')) |> 
   group_by(Plot_Name) |> summarize(Inv_Shrub_Cov = round(sum(shrub_avg_cov), 1))
 
-regen1 <- rbind(joinRegenData(park = MIDN1, from = years_MIDN1[1], to = years_MIDN1[2]),
+regen1 <- rbind(joinRegenData(park = MIDN1, from = years_MIDN1[1], to = years_MIDN1[2], locType = 'all'),
                 joinRegenData(park = MIDN2, from = years_MIDN2[1], to = years_MIDN2[2]),
                 joinRegenData(park = NCBN, from = years_NCBN[1], to = years_NCBN[2]),
                 joinRegenData(park = "COLO", from = years_COLO[1], to = years_COLO[2]),
@@ -79,7 +79,7 @@ regen <- regen1 |> group_by(Plot_Name) |>
   summarize(Num_Seedlings = sum(seed_den)*12, #convert from sq.m to # on plot
             Num_Saplings = sum(sap_den)*(3*(3^2*pi))) #convert from sq.m to # on plot
                                                    
-numspp1 <- rbind(sumSpeciesList(park = MIDN1, from = years_MIDN1[1], to = years_MIDN1[2]),
+numspp1 <- rbind(sumSpeciesList(park = MIDN1, from = years_MIDN1[1], to = years_MIDN1[2], locType = 'all'),
                  sumSpeciesList(park = MIDN2, from = years_MIDN2[1], to = years_MIDN2[2]),
                  sumSpeciesList(park = NCBN, from = years_NCBN[1], to = years_NCBN[2]),
                  sumSpeciesList(park = "COLO", from = years_COLO[1], to = years_COLO[2]),
@@ -152,18 +152,21 @@ photo_name_wide$Plot_Name <- sub("_", "-", photo_name_wide$plot_name)
 plots <- left_join(comb, photo_name_wide[,-1], by = "Plot_Name")
 plots$plot_number <- substr(plots$Plot_Name, 6, 9)
 
-#++++ ENDED HERE - JUST WAITING ON ASIS plots from 2026 to be posted on Teams.
 write.csv(plots, "./data/Plots.csv", row.names = FALSE)
 
 table(plots$Unit_Code)
 length(unique(plots$Plot_Name)) #400
-# Missing plots
-# ASIS-391-2026
-# ASIS-392-2026
-# ASIS-393-2026
-# ASIS-394-2026
-# ASIS-395-2026
-# ASIS-396-2026
+# Missing plots were initially ASIS 2026. Fixed now.
+
+# plots_latlon <- plots |> summarize(meanLat = mean(Lat), 
+#                                    meanLong = mean(Long), 
+#                                    minLat = min(Lat), 
+#                                    minLong = min(Long),
+#                                    maxLat = max(Lat), 
+#                                    maxLong = max(Long), 
+#                                    .by = "Unit_Code") |> 
+#   arrange(Unit_Code)
+# plots_latlon |> filter(Unit_Code == "RICH")
 
 # Check for duplicate plot records (ie QAQC photopoints missing _QAQC in the file name)
 dups <- plots$Plot_Name[duplicated(plots$Plot_Name)]
@@ -209,5 +212,7 @@ head(name_df)
 map2(name_df$full_name[1:500], name_df$photo_name[1:500], ~process_image(.x,.y), .progress = T)
 map2(name_df$full_name[501:1000], name_df$photo_name[501:1000], ~process_image(.x,.y), .progress = T)
 map2(name_df$full_name[1001:num_photos], name_df$photo_name[1001:num_photos], ~process_image(.x,.y), .progress = T)
+
 # Missing ASIS photos from 2026
-# map2(name_df$full_name[], name_df$photo_name[], ~process_image(.x,.y), .progress = T)
+asis_df <- name_df |> filter(grepl("ASIS", photo_name)) |> filter(grepl("2026", photo_name))
+map2(asis_df$full_name, asis_df$photo_name, ~process_image(.x,.y), .progress = T)
