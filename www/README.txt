@@ -1,0 +1,1 @@
+Photos are on external drive
