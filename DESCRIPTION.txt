@@ -1,0 +1,11 @@
+Package: MIDN_FVM_photos
+Title: MIDN_FVM_photos: R Shiny forest visualizer
+Version: 1.0.1
+Authors@R: c(
+    person(given="Kate", family="Miller", email="kathryn_miller@nps.gov",
+           role = c("aut", "cre"))
+Description: R repo of code to compile data for and run the MIDN photopoint viewer.
+License: CC0 + file LICENSE
+Encoding: UTF-8
+URL: https://github.com/doi-NPS/MIDN_FVM_photos
+BugReports: https://github.com/doi-NPS/MIDN_FVM_photos/issues
